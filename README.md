@@ -182,7 +182,7 @@ Pokédex completa con scroll infinito, filtros por tipo, modal de detalles y dis
 ### Instrucciones
 1. **Clona o descarga** este repositorio
 ```bash
-git clone [url-del-repositorio]
+git clone https://github.com/Mega-Yinops/Examen-SINTEC.git
 cd Examen-Sintec
 ```
 
