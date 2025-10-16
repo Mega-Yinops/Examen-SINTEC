@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Autenticación</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <!-- New font + custom styles -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        /* filepath: d:\Desarrollo Aaron\Examen\Examen-SINTEC\Ejercicio 1 - Jaciel Aaron.html */
+        :root{
+            --accent-1: #7c3aed; /* purple */
+            --accent-2: #06b6d4; /* teal */
+            --card-bg: rgba(255,255,255,0.70);
+            --muted: #6b7280;
+        }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+            background: linear-gradient(180deg, #0f172a 0%, #071033 50%, #041025 100%);
+            color: #e6eef8;
+            min-height: 100vh;
+        }
+        .fade-in {
+            animation: fadeIn 0.35s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hidden { display: none; }
+
+        /* Glass card */
+        .glass {
+            background: var(--card-bg);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(90deg, var(--accent-1), var(--accent-2));
+            color: white;
+            box-shadow: 0 6px 18px rgba(12,12,60,0.45);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.03);
+        }
+
+        /* Inputs */
+        .input-style {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            color: #eaf2ff;
+        }
+        .input-style::placeholder { color: rgba(230,240,255,0.6); }
+        .input-style:focus {
+            outline: none;
+            box-shadow: 0 0 0 4px rgba(124,58,237,0.12);
+            border-color: rgba(124,58,237,0.9);
+        }
+
+        /* Card accents */
+        .card-accent {
+            border-left: 4px solid rgba(124,58,237,0.9);
+        }
+
+        /* Expiration warning */
+        #expiration-warning {
+            background: linear-gradient(90deg, rgba(255,243,224,0.95), rgba(255,248,240,0.95));
+            color: #7c2d12;
+            border-left: 4px solid #f97316;
+            box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+        }
+
+        /* Small tweaks for protected content cards */
+        .protected-card {
+            background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+            border: 1px solid rgba(255,255,255,0.04);
+        }
+
+        /* Guest text muted */
+        .guest-muted { color: rgba(226,238,248,0.7); }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Navigation Bar -->
+    <nav class="text-white p-4 shadow-lg" style="background: linear-gradient(90deg,#6d28d9,#0891b2);">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-extrabold">Login Aaron — Prueba Técnica</h1>
+            <div id="user-info" class="hidden">
+                <span id="user-display" class="mr-4"></span>
+                <button id="logout-btn" class="px-4 py-2 rounded btn-primary">
+                    Cerrar Sesión
+                </button>
+            </div>
+            <div id="guest-info">
+                <span class="guest-muted">No autenticado</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content Container -->
+    <div class="container mx-auto mt-8 px-4">
+        
+        <!-- Login Form -->
+        <div id="login-section" class="max-w-md mx-auto glass rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold mb-6 text-center" style="color: #eaf2ff;">Iniciar Sesión</h2>
+            <form id="login-form">
+                <div class="mb-4">
+                    <label for="username" class="block text-sm font-medium" style="color:var(--accent-2); margin-bottom:6px;">
+                        Usuario
+                    </label>
+                    <input type="text" id="username" name="username" required
+                           class="w-full px-3 py-2 rounded-md input-style"
+                           placeholder="Ingrese su usuario">
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-sm font-medium" style="color:var(--accent-2); margin-bottom:6px;">
+                        Contraseña
+                    </label>
+                    <input type="password" id="password" name="password" required
+                           class="w-full px-3 py-2 rounded-md input-style"
+                           placeholder="Ingrese su contraseña">
+                </div>
+                <button type="submit" id="login-btn"
+                        class="w-full py-2 px-4 rounded-md btn-primary focus:outline-none">
+                    Ingresar
+                </button>
+            </form>
+        </div>
+
+        <!-- Protected Content -->
+        <div id="protected-content" class="hidden fade-in">
+            <!-- Dashboard -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <div class="protected-card rounded-lg shadow-md p-6 card-accent">
+                    <h3 class="text-lg font-semibold mb-2" style="color:#eaf2ff;">Panel Principal</h3>
+                    <p class="text-sm" style="color:var(--muted)">Bienvenido al sistema. Aquí puedes ver tu información personal.</p>
+                </div>
+                <div class="protected-card rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-2" style="color:#eaf2ff;">Estadísticas</h3>
+                    <p class="text-sm" style="color:var(--muted)">Revisa tus métricas y estadísticas importantes.</p>
+                </div>
+                <div class="protected-card rounded-lg shadow-md p-6">
+                    <h3 class="text-lg font-semibold mb-2" style="color:#eaf2ff;">Características Implementadas por Jaciel Aaron</h3>
+                    <div class="text-sm" style="color:var(--muted)">
+                        <p class="mb-2"><strong>✓ Autenticación JWT simulada</strong></p>
+                        <p class="mb-2"><strong>✓ Token con expiración (2 min)</strong></p>
+                        <p class="mb-2"><strong>✓ Rutas protegidas</strong></p>
+                        <p class="mb-2"><strong>✓ Middleware de protección</strong></p>
+                        <p class="mb-2"><strong>✓ Hook useAuth()</strong></p>
+                        <p class="mb-2"><strong>✓ Roles de usuario</strong></p>
+                        <p><strong>✓ Extensión de sesión</strong></p>
+                    </div>
+                </div>
+                <div class="protected-card rounded-lg shadow-md p-6" id="admin-panel">
+                    <h3 class="text-lg font-semibold mb-2" style="color:#eaf2ff;">Panel de Admin</h3>
+                    <p class="text-sm" style="color:var(--muted)">Funciones administrativas disponibles.</p>
+                </div>
+            </div>
+
+            <!-- Session Info -->
+            <div class="glass rounded-lg shadow-md p-6">
+                <h3 class="text-lg font-semibold mb-4" style="color:#eaf2ff;">Información de Sesión</h3>
+                <div id="session-info" style="color:var(--muted)">
+                    <p><strong>Usuario:</strong> <span id="session-user"></span></p>
+                    <p><strong>Rol:</strong> <span id="session-role"></span></p>
+                    <p><strong>Token expira en:</strong> <span id="token-countdown"></span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Token Expiration Warning -->
+        <div id="expiration-warning" class="hidden fixed top-4 right-4 rounded p-4">
+            <div class="flex">
+                <div class="ml-3">
+                    <p class="text-sm">
+                        <strong>Advertencia:</strong> Tu sesión expirará pronto.
+                        <button id="extend-session" class="ml-2 underline hover:no-underline" style="color:var(--accent-1);">
+                            Extender sesión
+                        </button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Authentication Management System
+        class AuthManager {
+            constructor() {
+                this.tokenKey = 'auth_token';
+                this.userKey = 'user_data';
+                this.tokenDuration = 2 * 60 * 1000; // 2 minutos
+                this.warningTime = 30 * 1000; // Advertir 30 segundos antes
+                this.countdownInterval = null;
+                this.warningTimeout = null;
+                this.expirationTimeout = null;
+            }
+
+            // Simular obtención de token JWT
+            async authenticateUser(username, password) {
+                // Simular delay de red
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Usuarios de prueba
+                const users = {
+                    'admin': { password: 'admin123', name: 'Administrador', role: 'admin' },
+                    'user': { password: 'user123', name: 'Usuario Normal', role: 'user' }
+                };
+
+                const user = users[username];
+                if (user && user.password === password) {
+                    const token = this.generateMockJWT(user);
+                    return { success: true, token, user: { name: user.name, role: user.role } };
+                }
+                
+                return { success: false, message: 'Credenciales inválidas' };
+            }
+
+            // Generar token JWT simulado
+            generateMockJWT(user) {
+                const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+                const payload = btoa(JSON.stringify({
+                    sub: user.name,
+                    role: user.role,
+                    iat: Date.now(),
+                    exp: Date.now() + this.tokenDuration
+                }));
+                const signature = btoa('mock_signature');
+                return `${header}.${payload}.${signature}`;
+            }
+
+            // Guardar token y datos de usuario
+            saveSession(token, user) {
+                localStorage.setItem(this.tokenKey, token);
+                localStorage.setItem(this.userKey, JSON.stringify(user));
+                this.scheduleExpiration();
+            }
+
+            // Obtener token almacenado
+            getToken() {
+                return localStorage.getItem(this.tokenKey);
+            }
+
+            // Obtener datos de usuario
+            getUser() {
+                const userData = localStorage.getItem(this.userKey);
+                return userData ? JSON.parse(userData) : null;
+            }
+
+            // Verificar si el token es válido
+            isTokenValid() {
+                const token = this.getToken();
+                if (!token) return false;
+
+                try {
+                    const payload = JSON.parse(atob(token.split('.')[1]));
+                    return payload.exp > Date.now();
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            // Programar expiración del token
+            scheduleExpiration() {
+                // Limpiar timeouts anteriores
+                if (this.warningTimeout) clearTimeout(this.warningTimeout);
+                if (this.expirationTimeout) clearTimeout(this.expirationTimeout);
+                if (this.countdownInterval) clearInterval(this.countdownInterval);
+
+                // Mostrar advertencia antes de expirar
+                this.warningTimeout = setTimeout(() => {
+                    this.showExpirationWarning();
+                }, this.tokenDuration - this.warningTime);
+
+                // Expirar automáticamente
+                this.expirationTimeout = setTimeout(() => {
+                    this.logout('Su sesión ha expirado');
+                }, this.tokenDuration);
+
+                // Iniciar countdown
+                this.startCountdown();
+            }
+
+            // Iniciar countdown visual
+            startCountdown() {
+                const countdownElement = document.getElementById('token-countdown');
+                const token = this.getToken();
+                if (!token) return;
+
+                const payload = JSON.parse(atob(token.split('.')[1]));
+                
+                this.countdownInterval = setInterval(() => {
+                    const remaining = Math.max(0, payload.exp - Date.now());
+                    const minutes = Math.floor(remaining / 60000);
+                    const seconds = Math.floor((remaining % 60000) / 1000);
+                    
+                    if (countdownElement) {
+                        countdownElement.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    }
+                    
+                    if (remaining <= 0) {
+                        clearInterval(this.countdownInterval);
+                    }
+                }, 1000);
+            }
+
+            // Mostrar advertencia de expiración
+            showExpirationWarning() {
+                const warning = document.getElementById('expiration-warning');
+                warning.classList.remove('hidden');
+                
+                document.getElementById('extend-session').onclick = () => {
+                    this.extendSession();
+                    warning.classList.add('hidden');
+                };
+            }
+
+            // Extender sesión
+            extendSession() {
+                const user = this.getUser();
+                if (user) {
+                    const newToken = this.generateMockJWT(user);
+                    this.saveSession(newToken, user);
+                }
+            }
+
+            // Cerrar sesión
+            logout(message = null) {
+                localStorage.removeItem(this.tokenKey);
+                localStorage.removeItem(this.userKey);
+                
+                // Limpiar timeouts
+                if (this.warningTimeout) clearTimeout(this.warningTimeout);
+                if (this.expirationTimeout) clearTimeout(this.expirationTimeout);
+                if (this.countdownInterval) clearInterval(this.countdownInterval);
+                
+                // Mostrar mensaje si se proporciona
+                if (message) {
+                    alert(message);
+                }
+                
+                // Actualizar UI
+                this.updateUI();
+            }
+
+            // Actualizar interfaz de usuario
+            updateUI() {
+                const isAuthenticated = this.isTokenValid();
+                const user = this.getUser();
+
+                // Mostrar/ocultar secciones
+                document.getElementById('login-section').classList.toggle('hidden', isAuthenticated);
+                document.getElementById('protected-content').classList.toggle('hidden', !isAuthenticated);
+                document.getElementById('user-info').classList.toggle('hidden', !isAuthenticated);
+                document.getElementById('guest-info').classList.toggle('hidden', isAuthenticated);
+                document.getElementById('expiration-warning').classList.add('hidden');
+
+                if (isAuthenticated && user) {
+                    // Actualizar información de usuario
+                    document.getElementById('user-display').textContent = `${user.name} (${user.role})`;
+                    document.getElementById('session-user').textContent = user.name;
+                    document.getElementById('session-role').textContent = user.role;
+                    
+                    // Mostrar/ocultar panel de admin
+                    const adminPanel = document.getElementById('admin-panel');
+                    adminPanel.style.display = user.role === 'admin' ? 'block' : 'none';
+                    
+                    this.startCountdown();
+                }
+            }
+        }
+
+        // Route Protection Middleware
+        class RouteProtector {
+            constructor(authManager) {
+                this.authManager = authManager;
+            }
+
+            // Verificar acceso a ruta protegida
+            canAccessRoute() {
+                return this.authManager.isTokenValid();
+            }
+
+            // Middleware para proteger contenido
+            protectRoute(callback) {
+                if (this.canAccessRoute()) {
+                    callback();
+                } else {
+                    this.authManager.logout('Acceso denegado. Debe iniciar sesión.');
+                }
+            }
+        }
+
+        // Hook de autenticación (equivalente a useAuth)
+        function useAuth() {
+            return {
+                isAuthenticated: authManager.isTokenValid(),
+                user: authManager.getUser(),
+                login: (username, password) => authManager.authenticateUser(username, password),
+                logout: () => authManager.logout(),
+                extendSession: () => authManager.extendSession()
+            };
+        }
+
+        // Inicializar sistema
+        const authManager = new AuthManager();
+        const routeProtector = new RouteProtector(authManager);
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Verificar estado inicial
+            authManager.updateUI();
+
+            // Manejar formulario de login
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const loginBtn = document.getElementById('login-btn');
+                const errorDiv = document.getElementById('login-error');
+                
+                // Deshabilitar botón durante autenticación
+                loginBtn.disabled = true;
+                loginBtn.textContent = 'Autenticando...';
+                errorDiv.classList.add('hidden');
+                
+                try {
+                    const result = await authManager.authenticateUser(username, password);
+                    
+                    if (result.success) {
+                        authManager.saveSession(result.token, result.user);
+                        authManager.updateUI();
+                        
+                        // Limpiar formulario
+                        document.getElementById('login-form').reset();
+                    } else {
+                        errorDiv.textContent = result.message;
+                        errorDiv.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    errorDiv.textContent = 'Error de conexión. Intente nuevamente.';
+                    errorDiv.classList.remove('hidden');
+                } finally {
+                    loginBtn.disabled = false;
+                    loginBtn.textContent = 'Ingresar';
+                }
+            });
+
+            // Manejar logout
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                authManager.logout();
+            });
+
+            // Simular navegación a rutas protegidas
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('protected-link')) {
+                    e.preventDefault();
+                    routeProtector.protectRoute(() => {
+                        console.log('Acceso permitido a ruta protegida');
+                    });
+                }
+            });
+
+            // Verificar token al enfocar la ventana
+            window.addEventListener('focus', () => {
+                if (!authManager.isTokenValid() && authManager.getToken()) {
+                    authManager.logout('Su sesión ha expirado');
+                }
+            });
+        });
+
+        // Exponer funciones globalmente para debugging
+        window.authManager = authManager;
+        window.routeProtector = routeProtector;
+        window.useAuth = useAuth;
+    </script>
+</body>
+</html>
